@@ -1,11 +1,13 @@
 name: Deploy to GitHub Pages
+
 on:
   push:
     branches: [ main ]
 
 permissions:
-  pages: write      # für deploy-pages
-  id-token: write   # für OIDC
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   build:
@@ -18,22 +20,22 @@ jobs:
           node-version: 20
 
       - run: npm ci
-      - run: npm run build
+      # optional: adapt base path for GitHub Pages
+      - run: npm run build -- --base=/Clavicle/
 
-      # Konfiguriert Pages (benötigt v4)
-      - uses: actions/configure-pages@v4
+      - uses: actions/configure-pages@v5
 
-      # Packt das ./dist-Verzeichnis (v4 nutzt upload-artifact@v4)
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: ./dist         # ← Vite output folder
+          retention-days: 7    # optional
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4   # veröffentlicht
+      - id: deploy
+        uses: actions/deploy-pages@v4
